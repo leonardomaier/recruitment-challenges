@@ -1,48 +1,58 @@
 const fs = require('fs');
 const Order = require('./Order');
 
-function getOrders(lines = []) {
-  return lines.map(line => {
-    const props = {};
+function getOrdersFromFile(filePath) {
+  try {
+    let fileContent = fs.readFileSync(filePath, 'utf8');
+    let lines = fileContent.split('\n');
 
-    [
-      props.orderId,
-      props.dealId,
-      props.email,
-      props.street,
-      props.city,
-      props.state,
-      props.zipCode,
-      props.creditCard
-    ] = line.split(',');
+    return lines.map(line => {
+      const props = {};
+  
+      [
+        props.orderId,
+        props.dealId,
+        props.email,
+        props.street,
+        props.city,
+        props.state,
+        props.zipCode,
+        props.creditCard
+      ] = line.split(',');
+  
+      return new Order(props);
+    });
 
-    return new Order(props);
-  });
+  } catch (error) {
+    throw Error(error);
+  }
 }
 
-function Check(filePath) {
-  // READ FRAUD LINES
-  let orders = []
+function check(filePath) {
 
-  let fileContent = fs.readFileSync(filePath, 'utf8')
-  let lines = fileContent.split('\n')
+  const fraudulents = order => order.fraudulent;
 
-  orders = getOrders(lines);
+  const toFraudObject = order => {
+    return { isFraudulent: order.fraudulent, orderId: order.orderId };
+  };
 
-  // CHECK FRAUD
+  let orders = getOrdersFromFile(filePath);
+
   for (let i = 0; i < orders.length; i++) {
-    let current = orders[i];
+
+    let currentOrder = orders[i];
 
     for (let j = i + 1; j < orders.length; j++) {
-      if (current.isFraudulentTo(orders[j])) {
-        orders[j].fraudulent = true;
+
+      let nextOrder = orders[j];
+
+      if (nextOrder.isFraudulentTo(currentOrder)) {
+        nextOrder.fraudulent = true;
       }
     }
   }
 
-  return orders.filter(order => order.fraudulent).map(order => {
-    return { isFraudulent: order.fraudulent, orderId: order.orderId }
-  });
+  return orders.filter(fraudulents).map(toFraudObject);
 }
 
-module.exports = { Check }
+module.exports = { check }
