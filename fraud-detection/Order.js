@@ -45,13 +45,17 @@ class Order {
     return this.city === city;
   }
 
+  fullAddressEqualTo(order) {
+    return this.stateEqualTo(order.state) &&
+      this.zipCodeEqualTo(order.zipCode) &&
+      this.streetEqualTo(order.street) &&
+      this.cityEqualTo(order.city);
+  }
+
   isFraudulentTo(order) {
     return this.emailEqualTo(order.email) || (
       this.dealIdEqualTo(order.dealId) &&
-      this.stateEqualTo(order.state) &&
-      this.zipCodeEqualTo(order.zipCode) &&
-      this.streetEqualTo(order.street) &&
-      this.cityEqualTo(order.city) &&
+      this.fullAddressEqualTo(order) &&
       this.creditCardDifferentFrom(order.creditCard)
     );
   }
