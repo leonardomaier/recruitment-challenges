@@ -23,7 +23,6 @@ function getOrders(lines = []) {
 function Check(filePath) {
   // READ FRAUD LINES
   let orders = []
-  let fraudResults = []
 
   let fileContent = fs.readFileSync(filePath, 'utf8')
   let lines = fileContent.split('\n')
@@ -32,26 +31,18 @@ function Check(filePath) {
 
   // CHECK FRAUD
   for (let i = 0; i < orders.length; i++) {
-    let current = orders[i]
-    let isFraudulent = false
+    let current = orders[i];
 
     for (let j = i + 1; j < orders.length; j++) {
-      isFraudulent = false
-
       if (current.isFraudulentTo(orders[j])) {
-        isFraudulent = true;
-      }
-
-      if (isFraudulent) {
-        fraudResults.push({
-          isFraudulent: true,
-          orderId: orders[j].orderId
-        })
+        orders[j].fraudulent = true;
       }
     }
   }
 
-  return fraudResults
+  return orders.filter(order => order.fraudulent).map(order => {
+    return { isFraudulent: order.fraudulent, orderId: order.orderId }
+  });
 }
 
 module.exports = { Check }
