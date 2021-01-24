@@ -1,29 +1,24 @@
-const fs = require('fs')
-const {
-  normalizeEmail,
-  normalizeState,
-  normalizeStreet
-} = require('./Normalizers');
-
+const fs = require('fs');
+const Order = require('./Order');
 
 function getOrders(lines = []) {
   return lines.map(line => {
-    [orderId, dealId, email, street, city, state, zipCode, creditCard] = line.split(',');
+    const props = {};
 
-    return {
-      orderId: Number(orderId),
-      dealId: Number(dealId),
-      email: normalizeEmail(email.toLowerCase()),
-      street: normalizeStreet(street.toLowerCase()),
-      city: city.toLowerCase(),
-      state: normalizeState(state.toLowerCase()),
-      zipCode,
-      creditCard
-    }
-  })
+    [
+      props.orderId,
+      props.dealId,
+      props.email,
+      props.street,
+      props.city,
+      props.state,
+      props.zipCode,
+      props.creditCard
+    ] = line.split(',');
+
+    return new Order(props);
+  });
 }
-
-
 
 function Check(filePath) {
   // READ FRAUD LINES
@@ -42,19 +37,9 @@ function Check(filePath) {
 
     for (let j = i + 1; j < orders.length; j++) {
       isFraudulent = false
-      if (current.dealId === orders[j].dealId
-        && current.email === orders[j].email
-        && current.creditCard !== orders[j].creditCard) {
-        isFraudulent = true
-      }
 
-      if (current.dealId === orders[j].dealId
-        && current.state === orders[j].state
-        && current.zipCode === orders[j].zipCode
-        && current.street === orders[j].street
-        && current.city === orders[j].city
-        && current.creditCard !== orders[j].creditCard) {
-        isFraudulent = true
+      if (current.isFraudulentTo(orders[j])) {
+        isFraudulent = true;
       }
 
       if (isFraudulent) {
